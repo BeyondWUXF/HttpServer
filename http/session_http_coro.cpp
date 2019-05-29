@@ -27,12 +27,8 @@ void session_http_coro::handle_request(boost::asio::yield_context yield) {
     res.keep_alive(req_.keep_alive());
 
     if (server_->handle_func_.find(req.path()) != server_->handle_func_.end()) {
-        bool hasNext = false;
-        while (true) {
-            hasNext = server_->handle_func_[req.path()](req, res);
+            server_->handle_func_[req.path()](req, res);
             send_response(yield, res.res_);
-            if (!hasNext) break;
-        }
     } else {
         res.result(boost::beast::http::status::not_found);
         res.keep_alive(false);

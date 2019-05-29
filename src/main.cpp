@@ -6,27 +6,17 @@
 
 boost::asio::io_context io;
 
-bool handle_test(http_request &req, http_response &res) {
+void handle_test(http_request &req, http_response &res) {
     int i = std::stol(const_cast<http_request &>(req).param("aaaa"));
     res.set(boost::beast::http::field::content_type, "text/json");
     res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") + "\"}"));
-    return false;
 }
 
-bool handle_chunked(http_request &req, http_response &res) {
-    static int i = 10;
+void handle_chunked(http_request &req, http_response &res) {
     res.chunked(true);
-    res.set(boost::beast::http::field::content_type, "text/plain");
-
-    i--;
-    if (i > 0) {
-        res.body("chunk:" + std::to_string(i));
-        return true;
-    }
-    else {
-        res.body("chunk:" + std::to_string(i));
-        return false;
-    }
+    res.set(boost::beast::http::field::content_type, "text/text");
+    res.body("fjdkslajiodsajfdjsak;fjdksoavdiisoapjfdowpqmfkdlasjvdopsajfkdlsajvkcls;ajfodpajfidopanvkdjsaiiofpjdisaopjvidsopajfidspajfvc\r\n"
+             "fjdkslajiodsajfdjsak;fjdksoavdiisoapjfdowpqmfkdlasjvdopsajfkdlsajvkcls;ajfodpajfidopanvkdjsaiiofpjdisaopjvidsopajfidspajfvc\r\n");
 }
 
 int main(int argc, char *argv[]) {
