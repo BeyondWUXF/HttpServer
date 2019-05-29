@@ -4,7 +4,7 @@
 
 #include "server_http_async.h"
 #include "session_http_async.h"
-#include "../src/config.h"
+#include "../../src/config.h"
 
 server_http_async::server_http_async(boost::asio::io_context &io) : acceptor_(io), socket_(io) {
     boost::system::error_code ec;

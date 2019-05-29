@@ -3,9 +3,9 @@
 //
 #pragma once
 
-#include "../util/vendor_boost.h"
-#include "http_request.h"
-#include "http_response.h"
+#include "../../util/vendor_boost.h"
+#include "../http_request.h"
+#include "../http_response.h"
 
 // return: true-has next packet(trunk), false-last packet
 using URI_HANDLE =  std::function<void (http_request &, http_response &)>;
