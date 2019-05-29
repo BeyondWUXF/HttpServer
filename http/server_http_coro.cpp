@@ -6,13 +6,22 @@
 #include "session_http_coro.h"
 #include "../src/config.h"
 
-server_http_coro::server_http_coro(boost::asio::io_context &io) : acceptor_(io) {
+server_http_coro::server_http_coro(boost::asio::io_context &io, int port, int listen) : acceptor_(io) {
     boost::system::error_code ec;
-    boost::asio::ip::tcp::endpoint addr(boost::asio::ip::tcp::v6(), config::get()->port);
-    acceptor_.open(addr.protocol());
-    acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true), ec);
-    acceptor_.bind(addr);
-    acceptor_.listen(config::get()->listen);
+    try {
+        boost::asio::ip::tcp::endpoint addr(boost::asio::ip::tcp::v6(), port);
+        acceptor_.open(addr.protocol());
+        acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true), ec);
+        if (ec) {
+            BOOST_LOG_TRIVIAL(error) << "Set reuse address error: " << ec.message();
+            exit(1);
+        }
+        acceptor_.bind(addr);
+        acceptor_.listen(listen);
+    } catch (std::exception &ec) {
+        BOOST_LOG_TRIVIAL(error) << "Init server listen at port " << port << " fail! " << ec.what();
+        exit(1);
+    }
 }
 
 void server_http_coro::run(boost::asio::yield_context yield) {

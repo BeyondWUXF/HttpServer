@@ -12,7 +12,7 @@ using URI_HANDLE =  std::function<void (http_request &, http_response &)>;
 
 class server_http_coro {
 public:
-    server_http_coro(boost::asio::io_context &io);
+    server_http_coro(boost::asio::io_context &io, int port, int listen);
     void handle_func(const std::string &uri, URI_HANDLE f);
     void run(boost::asio::yield_context);
 

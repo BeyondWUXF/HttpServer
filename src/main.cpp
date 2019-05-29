@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     config config_(io, argc, argv);
 
     // http服务协程
-    server_http_coro http(io);
+    server_http_coro http(io, config::get()->port, config::get()->listen);
     http.handle_func(std::string("/IrcChatData/Test"), handle_test);
     http.handle_func(std::string("/IrcChatData/Chunk"), handle_chunked);
 
