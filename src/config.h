@@ -6,8 +6,8 @@
 #include <iostream>
 #include <string>
 
-#include "vendor_boost.h"
-#include "local_addr.h"
+#include "../util/vendor_boost.h"
+#include "../util/local_addr.h"
 
 class config : public boost::noncopyable {
 public:

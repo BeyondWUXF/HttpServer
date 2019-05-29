@@ -4,7 +4,7 @@
 
 #include "server_http_coro.h"
 #include "session_http_coro.h"
-#include "config.h"
+#include "../src/config.h"
 
 server_http_coro::server_http_coro(boost::asio::io_context &io) : acceptor_(io) {
     boost::system::error_code ec;
