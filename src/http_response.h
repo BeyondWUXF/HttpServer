@@ -20,7 +20,7 @@ public:
 
     inline void result(unsigned v) {
         // see: boost/beast/http/status.hpp
-        res_.result(static_cast<boost::beast::http::status>(v));
+        res_.result(boost::beast::http::int_to_status(v));
     }
 
     inline void reason(std::string v) {
