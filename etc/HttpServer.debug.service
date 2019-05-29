@@ -1,0 +1,14 @@
+[Unit]
+Description=HttpServer
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=simple
+LimitCORE=infinity
+ExecStart=/data/htdocs/HttpServer/bin/HttpServer --environ=debug
+ExecStop=/bin/kill $MAINPID
+Restart=always
+RestartSec=1s
+
+[Install]
+WantedBy=multi-user.target
