@@ -10,7 +10,8 @@ C++实现基于boost库实现的http服务端
 gcc版本:          	|   4.8.5及以上版本、glibc-devel
 cmake版本：       	|   3.14.2及以上版本
 c++版本：         |	c++11及以上版本
-boost版本：         |  1.66.0及以上版本
+boost版本：         |  1.69.0
+RapidJSON           | v1.1.0
 
 ## 说明
 
@@ -64,13 +65,24 @@ systemctl start HttpServer.debug
 journalctl -fu HttpServer.debug
 ```
 
-## 压测
+## 压测（不使用JSON库）
 
-服务器4核CPU
+虚拟机服务器4核CPU
 
 ```
-$ ./wrk -c 100 -d 10 -t 4 -H "appid: 123" "http://10.90.101.143:10873/IrcChatData/Test?aaaa=88"
-Running 10s test @ http://10.90.101.143:10873/IrcChatData/Test?aaaa=88
+压测用例：
+curl http://1.1.1.1:123/IrcChatData/Test?aaaa=1 -H "appid: appid123"
+响应：
+{
+    "uri": "/IrcChatData/Test",
+    "param": "1",
+    "appid": "appid123"
+}
+```
+
+```
+$ ./wrk -c 100 -d 10 -t 4 -H "appid: 123" "http://1.1.1.1:123/IrcChatData/Test?aaaa=88"
+Running 10s test @ http://1.1.1.1:123/IrcChatData/Test?aaaa=88
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
     Latency     3.02ms    1.32ms  69.84ms   97.15%
@@ -79,8 +91,8 @@ Running 10s test @ http://10.90.101.143:10873/IrcChatData/Test?aaaa=88
 Requests/sec:  33511.10
 Transfer/sec:      4.60MB
 
-$ ./wrk -c 100 -d 10 -t 4 -H "appid: 123" "http://10.90.101.143:10873/IrcChatData/Test?aaaa=88"
-Running 10s test @ http://10.90.101.143:10873/IrcChatData/Test?aaaa=88
+$ ./wrk -c 100 -d 10 -t 4 -H "appid: 123" "http://1.1.1.1:123/IrcChatData/Test?aaaa=88"
+Running 10s test @ http://1.1.1.1:123/IrcChatData/Test?aaaa=88
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
     Latency     2.91ms    1.11ms  63.89ms   97.33%
@@ -89,8 +101,8 @@ Running 10s test @ http://10.90.101.143:10873/IrcChatData/Test?aaaa=88
 Requests/sec:  34741.34
 Transfer/sec:      4.77MB
 
-$ ./wrk -c 100 -d 10 -t 4 -H "appid: 123" "http://10.90.101.143:10873/IrcChatData/Test?aaaa=88"
-Running 10s test @ http://10.90.101.143:10873/IrcChatData/Test?aaaa=88
+$ ./wrk -c 100 -d 10 -t 4 -H "appid: 123" "http://1.1.1.1:123/IrcChatData/Test?aaaa=88"
+Running 10s test @ http://1.1.1.1:123/IrcChatData/Test?aaaa=88
   4 threads and 100 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
     Latency     2.94ms    1.24ms  66.96ms   97.58%
@@ -99,3 +111,53 @@ Running 10s test @ http://10.90.101.143:10873/IrcChatData/Test?aaaa=88
 Requests/sec:  34452.59
 Transfer/sec:      4.73MB
 ```
+
+## 压测（使用rapidjson库）
+
+虚拟机服务器4核CPU
+
+```
+压测用例：
+curl -v -H "appid: appid123" -d '{"paString":"this is string", "paNumber":123, "paBool":true, "paNull":null, "paDouble":3.1415, "paArr":[1,2,3,4]}' "http://127.0.0.1:123/IrcChatData/rapidjson?aaaa=1"
+响应：
+< HTTP/1.1 200 OK
+< Server: HttpServerV1.0
+< Content-Type: application/json
+< Content-Length: 169
+< 
+* Connection #0 to host 127.0.0.1 left intact
+{"respon":"respon from server","param":"1","appid":"appid123","paString":"this is string","paNumber":123,"paBool":true,"paNull":null,"paDouble":3.1415,"paArr":[1,2,3,4]}
+```
+
+```
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/rapidjson?aaaa=1"
+Running 10s test @ http://1.1.1.1:123/IrcChatData/rapidjson?aaaa=1
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     8.68ms   15.61ms 379.37ms   98.95%
+    Req/Sec     3.41k   478.08     8.36k    97.25%
+  270865 requests in 10.10s, 67.16MB read
+Requests/sec:  26818.85
+Transfer/sec:      6.65MB
+
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/rapidjson?aaaa=1"
+Running 10s test @ http://1.1.1.1:123/IrcChatData/rapidjson?aaaa=1
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     8.44ms   12.89ms 340.67ms   99.11%
+    Req/Sec     3.36k   370.57     7.94k    96.65%
+  269551 requests in 10.10s, 66.84MB read
+Requests/sec:  26688.02
+Transfer/sec:      6.62MB
+
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/rapidjson?aaaa=1"
+Running 10s test @ http://1.1.1.1:123/IrcChatData/rapidjson?aaaa=1
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     8.66ms   13.66ms 355.83ms   99.08%
+    Req/Sec     3.30k   365.51     7.25k    95.02%
+  263780 requests in 10.10s, 65.41MB read
+Requests/sec:  26116.92
+Transfer/sec:      6.48MB
+```
+

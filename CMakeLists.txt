@@ -6,7 +6,7 @@ set(BOOST_INC_DIR /usr/local/boost/include)
 set(BOOST_LIB_DIR /usr/local/boost/lib)
 #set(BOOST_LIB)
 
-include_directories(${BOOST_INC_DIR})
+include_directories(${BOOST_INC_DIR} vendor)
 link_directories(${BOOST_LIB_DIR})
 #link_libraries(boost_coroutine boost_context boost_filesystem boost_program_options boost_log_setup boost_log boost_system boost_thread boost_regex pthread rt dl z)
 
