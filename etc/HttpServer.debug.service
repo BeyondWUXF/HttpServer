@@ -4,11 +4,13 @@ After=network.target remote-fs.target nss-lookup.target
 
 [Service]
 Type=simple
+User=root
 LimitCORE=infinity
+WorkingDirectory=/data/htdocs/HttpServer/bin	#工作路径
 ExecStart=/data/htdocs/HttpServer/bin/HttpServer --environ=debug
 ExecStop=/bin/kill $MAINPID
 Restart=always
-RestartSec=1s
+#RestartSec=1s
 
 [Install]
 WantedBy=multi-user.target

@@ -38,6 +38,32 @@ boost版本：         |  1.66.0及以上版本
 cmake --build /root/projects/HttpServer/cmake-build-debug --target HttpServer -- -j 4
 ```
 
+## 配置服务启动
+
+```
+// 创建项目文件夹
+mkdir -p /data/htdocs/HttpServer/bin/       // 路径可自己选择
+mkdir -p /data/htdocs/HttpServer/etc/
+
+// 将可执行程序移到目录下
+cp YOUR_DIR/cmake-build-debug/HttpServer /data/htdocs/HttpServer/bin/
+
+// 将配置文件移到目录下
+cp YOUR_DIR/etc/* /data/htdocs/HttpServer/etc/
+
+// 创建systemctl配置文件
+ln -s /data/htdocs/HttpServer/etc/HttpServer.debug.service /usr/lib/systemd/system/HttpServer.debug.service
+
+// 配置文件重载
+systemctl daemon-reload
+
+// 启动服务
+systemctl start HttpServer.debug
+
+// 查看启动日志
+journalctl -fu HttpServer.debug
+```
+
 ## 压测
 
 服务器4核CPU
