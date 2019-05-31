@@ -11,7 +11,8 @@ gcc版本:          	|   4.8.5及以上版本、glibc-devel
 cmake版本：       	|   3.14.2及以上版本
 c++版本：         |	c++11及以上版本
 boost版本：         |  1.69.0
-RapidJSON           | v1.1.0
+RapidJSON版本：           | v1.1.0
+hiredis版本:      |v0.14.0及以上版本
 
 ## 说明
 
@@ -31,7 +32,7 @@ RapidJSON           | v1.1.0
 
 ## 例子
 
-参考src/main.cpp
+参考src/http_main.cpp
 
 ## 编译
 
