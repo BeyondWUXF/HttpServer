@@ -27,11 +27,10 @@ void session_http_coro::handle_request(boost::asio::yield_context yield) {
     res.keep_alive(req_.keep_alive());
 
     if (server_->handle_func_.find(req.path()) != server_->handle_func_.end()) {
-            server_->handle_func_[req.path()](req, res);
+            server_->handle_func_[req.path()](req, res, socket_.get_io_context(), yield);
             send_response(yield, res.res_);
     } else {
         res.result(boost::beast::http::status::not_found);
-        res.keep_alive(false);
         res.set(boost::beast::http::field::content_type, "text/plain");
         res.body(req.path() + " not found!");
         send_response(yield, res.res_);

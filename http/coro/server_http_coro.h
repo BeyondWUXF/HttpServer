@@ -8,7 +8,7 @@
 #include "../http_response.h"
 
 // return: true-has next packet(trunk), false-last packet
-using URI_HANDLE =  std::function<void (http_request &, http_response &)>;
+using URI_HANDLE =  std::function<void (http_request &, http_response &, boost::asio::io_context &io, boost::asio::yield_context)>;
 
 class server_http_coro {
 public:

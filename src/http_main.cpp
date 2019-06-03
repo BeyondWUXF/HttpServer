@@ -11,20 +11,20 @@
 #include "hiredis/hiredis.h"
 
 
-void handle_test(http_request &req, http_response &res) {
+void handle_test(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
     int i = std::stol(const_cast<http_request &>(req).param("aaaa"));
     res.set(boost::beast::http::field::content_type, "application/json");
     res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") + "\"}"));
 }
 
-void handle_chunked(http_request &req, http_response &res) {
+void handle_chunked(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
     res.chunked(true);
     res.set(boost::beast::http::field::content_type, "text/text");
     res.body("fjdkslajiodsajfdjsak;fjdksoavdiisoapjfdowpqmfkdlasjvdopsajfkdlsajvkcls;ajfodpajfidopanvkdjsaiiofpjdisaopjvidsopajfidspajfvc\r\n"
              "fjdkslajiodsajfdjsak;fjdksoavdiisoapjfdowpqmfkdlasjvdopsajfkdlsajvkcls;ajfodpajfidopanvkdjsaiiofpjdisaopjvidsopajfidspajfvc\r\n");
 }
 
-void handle_rapidjson(http_request &req, http_response &res) {
+void handle_rapidjson(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
     rapidjson::Document doc;
     doc.Parse(req.body().c_str());
     if (!doc.IsObject()) {
@@ -54,21 +54,22 @@ void handle_rapidjson(http_request &req, http_response &res) {
     res.body(buffer.GetString());
 }
 
-void handle_stat(http_request &req, http_response &res) {
+void handle_stat(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
     scope_logger<> scopeLogger("/IrcChatData/stat", 1);
     res.set(boost::beast::http::field::content_type, "application/json");
     res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") + "\"}"));
     //boost::asio::deadline_timer timer(io, boost::posix_time::seconds(5));
-    //timer.wait();
-    sleep(5);
-    std::cout << "endl" << std::endl;
+    //boost::system::error_code ec;
+    //timer.async_wait(yield[ec]);
+    //sleep(5);
+    //std::cout << "end:" << ec.message() << std::endl;
 }
 
-void handle_redis(http_request &req, http_response &res) {
+void handle_redis(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
     scope_logger<> scopeLogger("/IrcChatData/redis", 1);
     res.set(boost::beast::http::field::content_type, "application/json");
 
-    redisContext *c = redisConnectNonBlock(req.param("host").c_str(), std::atoi(req.param("port").c_str()));
+    redisContext *c = redisConnect(req.param("host").c_str(), std::atoi(req.param("port").c_str()));
     if (c == NULL || c->err) {
         std::string e;
         if (c) {
@@ -92,6 +93,13 @@ void handle_redis(http_request &req, http_response &res) {
 
 }
 
+void handle_sync(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
+    scope_logger<> scopeLogger("/IrcChatData/sync", 1);
+    res.set(boost::beast::http::field::content_type, "application/json");
+
+    //boost::async_result()
+}
+
 int main(int argc, char *argv[]) {
     boost::thread_group tg;
 
@@ -107,14 +115,15 @@ int main(int argc, char *argv[]) {
     http.handle_func(std::string("/IrcChatData/rapidjson"), handle_rapidjson);
     http.handle_func(std::string("/IrcChatData/stat"), handle_stat);
     http.handle_func(std::string("/IrcChatData/redis"), handle_redis);
+    http.handle_func(std::string("/IrcChatData/sync"), handle_sync);
     boost::asio::spawn(io_http, std::bind(&server_http_coro::run, &http, std::placeholders::_1));
 
     // 监听第二个端口，使用另一个contexst，保证一个context被阻塞时，另一个不影响
-    boost::asio::io_context io_http2;
+    /*boost::asio::io_context io_http2;
     server_http_coro http2(io_http2, config::get()->port + 1, config::get()->listen);
     http2.handle_func(std::string("/IrcChatData/rapidjson"), handle_rapidjson);
     http2.handle_func(std::string("/IrcChatData/redis"), handle_redis);
-    boost::asio::spawn(io_http2, std::bind(&server_http_coro::run, &http2, std::placeholders::_1));
+    boost::asio::spawn(io_http2, std::bind(&server_http_coro::run, &http2, std::placeholders::_1));*/
 
     // 系统配置
     tg.add_thread(new boost::thread( [&] { io_main.run(); }));
@@ -125,12 +134,12 @@ int main(int argc, char *argv[]) {
     }
 
     // 第二个http服务
-    for (auto i = config::get()->worker; i > 0; i--) {
+    /*for (auto i = config::get()->worker; i > 0; i--) {
         tg.add_thread(new boost::thread( [&] { io_http2.run(); }));
-    }
+    }*/
 
     // 其它业务线程
-    tg.add_thread(new boost::thread(
+    /*tg.add_thread(new boost::thread(
             []{
                 while (true) {
                     std::cout << "Server running......" << std::endl;
@@ -138,7 +147,7 @@ int main(int argc, char *argv[]) {
                 }
             }
             )
-    );
+    );*/
 
     tg.join_all();
 

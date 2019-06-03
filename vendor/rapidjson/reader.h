@@ -1020,7 +1020,7 @@ private:
         is.dst_ = q;
     }
 
-    // When read/write pointers are the same for insitu stream, just skip unescaped characters
+    // When read/record pointers are the same for insitu stream, just skip unescaped characters
     static RAPIDJSON_FORCEINLINE void SkipUnescapedString(InsituStringStream& is) {
         RAPIDJSON_ASSERT(is.src_ == is.dst_);
         char* p = is.src_;
