@@ -1,6 +1,0 @@
-/root/projects/HttpServer/vendor/hiredis/build/../lib/libhiredis.a
-/root/projects/HttpServer/vendor/hiredis/build/../include/hiredis/hiredis.h
-/root/projects/HttpServer/vendor/hiredis/build/../include/hiredis/read.h
-/root/projects/HttpServer/vendor/hiredis/build/../include/hiredis/sds.h
-/root/projects/HttpServer/vendor/hiredis/build/../include/hiredis/async.h
-/root/projects/HttpServer/vendor/hiredis/build/../lib/pkgconfig/hiredis.pc
