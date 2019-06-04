@@ -25,6 +25,7 @@ void config::init_options(int argc, char *argv[]) {
             ("utils.max_listen", boost::program_options::value<int>(&listen)->default_value(256), "[ ] 同时监听数")
             ("utils.log", boost::program_options::value<std::string>(&log_path_)->default_value(""), "[ ] 日志输出文件")
             ("utils.log_level", boost::program_options::value<boost::log::trivial::severity_level>(&log_level_)->default_value(boost::log::trivial::info), "[ ] log 等级: trace/debug/info/warning")
+            ("utils.limit", boost::program_options::value<bool>(&limit)->default_value(false), "[ ] 是否开启限流")
             ("pika.host", boost::program_options::value<std::string>(&pika.host), "[*] pika地址.")
             ("pika.port", boost::program_options::value<int>(&pika.port), "[*] pika端口.")
             ("server.port", boost::program_options::value<int>(&port)->default_value(7001), "[ ] 监听端口");

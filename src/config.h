@@ -18,6 +18,7 @@ public:
     int worker;
     int listen;
     int port;
+    bool limit;
     struct {
         std::string host;
         int port;

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <thread>
 #include "config.h"
+#include "limit_config.h"
 #include "coro/server_http_coro.h"
 #include "async/server_http_async.h"
 #include "rapidjson/document.h"
@@ -9,6 +10,10 @@
 #include "rapidjson/writer.h"
 #include "scope_logger.hpp"
 #include "hiredis/hiredis.h"
+#include "invoke_stat.h"
+#include "limit_check.h"
+#include "timer_actor.h"
+#include "timer_manager.h"
 
 
 void handle_test(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
@@ -56,6 +61,7 @@ void handle_rapidjson(http_request &req, http_response &res, boost::asio::io_con
 
 void handle_stat(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
     scope_logger<> scopeLogger("/IrcChatData/stat", 1);
+    //invoke_stat::get()-> add(req.path());
     res.set(boost::beast::http::field::content_type, "application/json");
     res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") + "\"}"));
     //boost::asio::deadline_timer timer(io, boost::posix_time::seconds(5));
@@ -100,12 +106,39 @@ void handle_sync(http_request &req, http_response &res, boost::asio::io_context 
     //boost::async_result()
 }
 
+void handle_invoke(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
+    //invoke_stat::get()-> add(req.path());
+    if (limit_check::check(req.path() + "?appid1", invoke_stat::get()->add(req.path() + "?appid1"))) {
+        res.result(boost::beast::http::status::service_unavailable);
+        res.set(boost::beast::http::field::content_type, "text/plain");
+        res.body("Out of limit!");
+        return;
+    }
+
+    res.set(boost::beast::http::field::content_type, "application/json");
+    res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") + "\"}"));
+}
+
+void handle_timer(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
+    std::make_shared<timer_actor>(io, 2, [](){
+        BOOST_LOG_TRIVIAL(info) << " time is up!";
+        return false;
+    })->start();
+
+    res.set(boost::beast::http::field::content_type, "application/json");
+    res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") + "\"}"));
+}
+
 int main(int argc, char *argv[]) {
     boost::thread_group tg;
 
     // 系统配置初始化
     boost::asio::io_context io_main;    // 用于信号注册，重新打开日志文件
     config config_(io_main, argc, argv);
+    limit_config limit_(io_main, argv[0]);
+    timer_manager tm(io_main);  // 定时器，不需要可以不用定义，也可以不用管理器，timer_actor采用智能指针，使用参考handle_timer
+
+    invoke_stat invoke_;
 
     // http服务协程
     boost::asio::io_context io_http;
@@ -116,6 +149,8 @@ int main(int argc, char *argv[]) {
     http.handle_func(std::string("/IrcChatData/stat"), handle_stat);
     http.handle_func(std::string("/IrcChatData/redis"), handle_redis);
     http.handle_func(std::string("/IrcChatData/sync"), handle_sync);
+    http.handle_func(std::string("/IrcChatData/invoke"), handle_invoke);
+    http.handle_func(std::string("/IrcChatData/timer"), handle_timer);
     boost::asio::spawn(io_http, std::bind(&server_http_coro::run, &http, std::placeholders::_1));
 
     // 监听第二个端口，使用另一个contexst，保证一个context被阻塞时，另一个不影响
@@ -127,6 +162,13 @@ int main(int argc, char *argv[]) {
 
     // 系统配置
     tg.add_thread(new boost::thread( [&] { io_main.run(); }));
+    uint64_t timer_id =
+    timer_manager::get()->add_timer(100, [](){
+        //BOOST_LOG_TRIVIAL(info) << " time is up!";
+        invoke_stat::dump();
+        return true;
+    });
+    //timer_manager::get()->del_timer(timer_id);
 
     // 第一个http服务
     for (auto i = config::get()->worker; i > 0; i--) {

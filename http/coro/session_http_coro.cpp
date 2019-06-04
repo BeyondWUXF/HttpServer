@@ -4,9 +4,11 @@
 
 #include "session_http_coro.h"
 #include "server_http_coro.h"
+#include "invoke_stat.h"
+#include "limit_check.h"
 
 session_http_coro::session_http_coro(boost::asio::io_context &io, server_http_coro *server) : socket_(io), server_(server) {
-
+    //socket_.
 }
 
 void session_http_coro::send_response(boost::asio::yield_context yield, const boost::beast::http::response<boost::beast::http::string_body> &res) {
@@ -27,14 +29,20 @@ void session_http_coro::handle_request(boost::asio::yield_context yield) {
     res.keep_alive(req_.keep_alive());
 
     if (server_->handle_func_.find(req.path()) != server_->handle_func_.end()) {
+        if (limit_check::check(req.path(), invoke_stat::get()->add(req.path()))) {
+            res.result(boost::beast::http::status::service_unavailable);
+            res.set(boost::beast::http::field::content_type, "text/plain");
+            res.body("Out of limit!");
+        } else {
             server_->handle_func_[req.path()](req, res, socket_.get_io_context(), yield);
-            send_response(yield, res.res_);
+        }
     } else {
         res.result(boost::beast::http::status::not_found);
         res.set(boost::beast::http::field::content_type, "text/plain");
         res.body(req.path() + " not found!");
-        send_response(yield, res.res_);
     }
+
+    send_response(yield, res.res_);
 }
 
 void session_http_coro::run(boost::asio::yield_context yield) {

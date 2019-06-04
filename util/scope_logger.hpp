@@ -12,7 +12,7 @@
 
 #include "vendor_boost.h"
 
-class default_warn_recorder {
+class default_scope_warn_recorder {
 public:
     static void record(const std::string &s) {
         //std::cout << s << std::endl;
@@ -20,7 +20,7 @@ public:
     }
 };
 
-class default_total_recorder {
+class default_scope_total_recorder {
 public:
     static void record(const std::string &s) {
         BOOST_LOG_TRIVIAL(info) << s;
@@ -36,7 +36,8 @@ public:
     }
 };
 
-template <typename warn_recorder = default_warn_recorder, typename total_recorder = default_total_recorder,
+template <typename warn_recorder = default_scope_warn_recorder,
+          typename total_recorder = default_scope_total_recorder,
           typename dump_recorder = default_scope_dump_recorder>
 class scope_logger {
 public:
