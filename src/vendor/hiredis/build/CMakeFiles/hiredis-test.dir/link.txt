@@ -1,0 +1,1 @@
+/bin/cc    CMakeFiles/hiredis-test.dir/test.c.o  -o hiredis-test libhiredis.a 

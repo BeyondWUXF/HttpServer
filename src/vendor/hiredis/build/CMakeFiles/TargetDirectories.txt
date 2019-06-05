@@ -1,0 +1,9 @@
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/install.dir
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/list_install_components.dir
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/rebuild_cache.dir
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/edit_cache.dir
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/test.dir
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/hiredis-test.dir
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/install/strip.dir
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/install/local.dir
+/root/projects/HttpServer/vendor/hiredis/build/CMakeFiles/hiredis.dir
