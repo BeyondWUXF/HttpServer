@@ -1,5 +1,6 @@
 #include <iostream>
 #include <thread>
+#include "string_util.h"
 #include "config.h"
 #include "limit_config.h"
 #include "coro/server_http_coro.h"
@@ -14,6 +15,8 @@
 #include "limit_check.h"
 #include "timer_actor.h"
 #include "timer_manager.h"
+#include "CRedisDBInterface.h"
+#include "CThreadSafeRedis.h"
 
 
 void handle_test(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
@@ -129,6 +132,32 @@ void handle_timer(http_request &req, http_response &res, boost::asio::io_context
     res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") + "\"}"));
 }
 
+void handle_redis_dao(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
+    scope_logger<> scopeLogger("/IrcChatData/redisdao", 1);
+    res.set(boost::beast::http::field::content_type, "application/json");
+
+    CRedisDBInterface redis;
+    redis.ConnectDB(req.param("host"), std::atoi(req.param("port").c_str()));
+
+    std::string value;
+    redis.Get("test123", value);
+    res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") +
+                         + "\", \"redis\":\"" + value + "\"}"));
+
+}
+
+void handle_redis_safe(http_request &req, http_response &res, boost::asio::io_context &io, boost::asio::yield_context yield) {
+    scope_logger<> scopeLogger("/IrcChatData/redisdao", 1);
+    res.set(boost::beast::http::field::content_type, "application/json");
+
+    std::string value;
+    g_redis_client->Get(req.param("key"), value);
+
+    res.body(std::string("{\"uri\":\"" + req.path() + "\", \"param\":\"" + req.param("aaaa") + "\", \"appid\":\"" + req.header("appid") +
+                         + "\", \"redis\":\"" + value + "\"}"));
+
+}
+
 int main(int argc, char *argv[]) {
     boost::thread_group tg;
 
@@ -151,6 +180,8 @@ int main(int argc, char *argv[]) {
     http.handle_func(std::string("/IrcChatData/sync"), handle_sync);
     http.handle_func(std::string("/IrcChatData/invoke"), handle_invoke);
     http.handle_func(std::string("/IrcChatData/timer"), handle_timer);
+    http.handle_func(std::string("/IrcChatData/redisdao"), handle_redis_dao);
+    http.handle_func(std::string("/IrcChatData/redissafe"), handle_redis_safe);
     boost::asio::spawn(io_http, std::bind(&server_http_coro::run, &http, std::placeholders::_1));
 
     // 监听第二个端口，使用另一个contexst，保证一个context被阻塞时，另一个不影响

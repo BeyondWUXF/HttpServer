@@ -22,7 +22,8 @@ public:
     struct {
         std::string host;
         int port;
-    }pika;
+        std::string pwd;
+    }redis;
 
 private:
     static config *ins_;

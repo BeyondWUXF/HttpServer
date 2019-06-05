@@ -30,6 +30,10 @@ hiredis版本:      |v0.14.0及以上版本
 
 7、服务通过systemctl监控启动
 
+8、使用rapidjson库进行json的解析、封装
+
+9、使用hiredis库实现redis客户端操作，使用阻塞方式，封装了线程安装的redis相关调用方法
+
 ## 例子
 
 参考src/http_main.cpp
@@ -69,6 +73,7 @@ journalctl -fu HttpServer.debug
 ## 压测（不使用JSON库）
 
 虚拟机服务器4核CPU
+4个线程处理http请求
 
 ```
 压测用例：
@@ -116,6 +121,7 @@ Transfer/sec:      4.73MB
 ## 压测（使用rapidjson库）
 
 虚拟机服务器4核CPU
+4个线程处理http请求
 
 ```
 压测用例：
@@ -162,3 +168,86 @@ Requests/sec:  26116.92
 Transfer/sec:      6.48MB
 ```
 
+## 压测（使用hiredis，测试get）
+
+虚拟机服务器4核CPU
+4个线程处理http请求,每个线程单独的redis连接
+
+```
+压测用例：
+curl -v -H "appid: appid123" -d '{"paString":"this is string", "paNumber":123, "paBool":true, "paNull":null, "paDouble":3.1415, "paArr":[1,2,3,4]}'  "http://1.1.1.1:123/IrcChatData/redissafe?aaaa=1&key=test123"
+响应：
+< HTTP/1.1 200 OK
+< Server: HttpServerV1.0
+< Content-Type: application/json
+< Content-Length: 105
+< 
+* Connection #0 to host 10.90.101.143 left intact
+{"uri":"/IrcChatData/redissafe", "param":"1", "appid":"appid123", "redis":"redis test key 123123 132321"}
+```
+
+```
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/redissafe?aaaa=1&key=test123"
+Running 10s test @ http://10.90.101.143:10873/IrcChatData/redissafe?aaaa=1&key=test123
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    13.19ms   25.50ms 524.83ms   98.55%
+    Req/Sec     2.36k   687.68    17.97k    95.47%
+  186286 requests in 10.10s, 34.82MB read
+Requests/sec:  18445.14
+Transfer/sec:      3.45MB
+
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/redissafe?aaaa=1&key=test123"
+Running 10s test @ http://10.90.101.143:10873/IrcChatData/redissafe?aaaa=1&key=test123
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    12.93ms   25.66ms 533.21ms   98.54%
+    Req/Sec     2.42k   493.28     8.77k    96.73%
+  191743 requests in 10.10s, 35.84MB read
+Requests/sec:  18984.99
+Transfer/sec:      3.55MB
+
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/redissafe?aaaa=1&key=test123"
+Running 10s test @ http://10.90.101.143:10873/IrcChatData/redissafe?aaaa=1&key=test123
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    13.07ms   24.46ms 516.34ms   98.65%
+    Req/Sec     2.34k   425.48     7.13k    96.36%
+  185720 requests in 10.10s, 34.71MB read
+Requests/sec:  18388.10
+Transfer/sec:      3.44MB
+```
+
+压测redis value数据大小为10k
+
+```
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/redissafe?aaaa=1&key=test124"
+Running 10s test @ http://10.90.101.143:10873/IrcChatData/redissafe?aaaa=1&key=test124
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    18.89ms   31.38ms 609.96ms   98.39%
+    Req/Sec     1.60k   402.11     7.16k    89.79%
+  126766 requests in 10.00s, 1.20GB read
+Requests/sec:  12670.37
+Transfer/sec:    122.52MB
+
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/redissafe?aaaa=1&key=test124"
+Running 10s test @ http://10.90.101.143:10873/IrcChatData/redissafe?aaaa=1&key=test124
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    18.27ms   27.61ms 556.83ms   98.51%
+    Req/Sec     1.61k   523.50     9.79k    90.30%
+  127734 requests in 10.10s, 1.21GB read
+Requests/sec:  12648.19
+Transfer/sec:    122.30MB
+
+$ /opt/tool/wrk/wrk -c 200 -d 10 -t 8 -s httpserver.lua "http://1.1.1.1:123/IrcChatData/redissafe?aaaa=1&key=test124"
+Running 10s test @ http://10.90.101.143:10873/IrcChatData/redissafe?aaaa=1&key=test124
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    18.20ms   27.26ms 556.10ms   98.57%
+    Req/Sec     1.61k   488.57     9.75k    88.30%
+  127723 requests in 10.10s, 1.21GB read
+Requests/sec:  12647.38
+Transfer/sec:    122.29MB
+```
