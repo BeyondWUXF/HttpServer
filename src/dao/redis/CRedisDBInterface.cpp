@@ -60,7 +60,7 @@ bool CRedisDBInterface::ConnectDB(const std::string &strIp, int32_t nPort) {
         m_pRedisDBContex = nullptr;
     }
 
-    scope_logger<> scopeLogger("ConnectRedis", 1);
+    scope_logger<> scopeLogger("ConnectRedis", 10);
     m_pRedisDBContex = redisConnect(strIp.c_str(), nPort);
     if (0 != m_pRedisDBContex->err) {
         BOOST_LOG_TRIVIAL(warning) << "CRedisDBInterface::ConnectDB " << strIp << ":" << nPort << " failed";
