@@ -1,4 +1,4 @@
-########################开发环境systemd配置文件########################
+########################线上环境systemd配置文件########################
 [Unit]
 Description=HttpServer
 After=network.target remote-fs.target nss-lookup.target
